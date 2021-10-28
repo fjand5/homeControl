@@ -14,6 +14,7 @@ void setOnConfigChange(void (*func)(String key, String value))
 {
   onConfigChanges.push_front(func);
 }
+SemaphoreHandle_t store_sem;
 // Mỗi dòng là một phần tử (một cặp key value) (key):(value)\n
 void loadFileIntoConfig(String content)
 {
@@ -40,16 +41,24 @@ bool checkKey(String key)
 // Lấy giá trị của Key
 String getValue(String key, String def = "", bool setDefaultTokey = true)
 {
-  if (checkKey(key))
-    return ConfigContent[key];
-  else
+  if (xSemaphoreTake(store_sem, portMAX_DELAY) == pdTRUE)
   {
-    if (setDefaultTokey){
-      setValue(key, def, true);
-
+    if (checkKey(key)){
+      String ret = ConfigContent[key];
+      xSemaphoreGive(store_sem);
+      return ret;
     }
-    return def;
+    else
+    {
+      if (setDefaultTokey)
+      {
+        xSemaphoreGive(store_sem);
+        setValue(key, def, true);
+      }
+      return def;
+    }
   }
+  return "";
 }
 
 // Lấy toàn bộ file content
@@ -81,56 +90,66 @@ String getValuesByJson()
 // Gán giá trị cho key
 void setValue(String key, String value, bool save = true)
 {
-  ConfigContent[key] = value;
-  verContHost++;
-  // nếu không yêu cầu lưu vào flash
-  if (!save)
-    return;
-
-  File cfg_file = SPIFFS.open(CONFIG_FILE, "w");
-  if (!cfg_file)
+  if (xSemaphoreTake(store_sem, portMAX_DELAY) == pdTRUE)
   {
-    cfg_file.close();
-    return;
-  }
-
-  for (std::pair<String, String> e : ConfigContent)
-  {
-    String k = e.first;
-    String v = e.second;
-    cfg_file.print(k + ":" + v + "\n");
-  }
-
-  cfg_file.close();
-  for (auto onConfigChange = onConfigChanges.begin();
-       onConfigChange != onConfigChanges.end();
-       ++onConfigChange)
-  {
-    if ((*onConfigChange) != NULL)
-    {
-      (*onConfigChange)(key, value);
+    ConfigContent[key] = value;
+    verContHost++;
+    // nếu không yêu cầu lưu vào flash
+    if (!save){
+      xSemaphoreGive(store_sem);
+      return;
     }
+
+    File cfg_file = SPIFFS.open(CONFIG_FILE, "w");
+    if (!cfg_file)
+    {
+      cfg_file.close();
+      return;
+    }
+
+    for (std::pair<String, String> e : ConfigContent)
+    {
+      String k = e.first;
+      String v = e.second;
+      cfg_file.print(k + ":" + v + "\n");
+    }
+
+    cfg_file.close();
+    for (auto onConfigChange = onConfigChanges.begin();
+         onConfigChange != onConfigChanges.end();
+         ++onConfigChange)
+    {
+      if ((*onConfigChange) != NULL)
+      {
+        (*onConfigChange)(key, value);
+      }
+    }
+
+    xSemaphoreGive(store_sem);
   }
 }
 
 // Khởi tạo
 void setupConfig()
 {
+
+  store_sem = xSemaphoreCreateBinary();
   if (!SPIFFS.begin())
   {
     SPIFFS.format();
     if (!SPIFFS.begin())
     {
       return;
-      Serial.println("SPIFFS mounted ");
     }
     else
     {
-      Serial.println("Can't mount SPIFFS");
+      xSemaphoreGive(store_sem);
+      Serial.println(" mounted SPIFFS");
     }
   }
   else
   {
+    xSemaphoreGive(store_sem);
     Serial.println("SPIFFS mounted ");
   }
 

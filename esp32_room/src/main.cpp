@@ -9,8 +9,8 @@ void setup() {
   Serial.println("Booted...");
   setupWifi();
   setupConfig();
-  setupTemperature();
   setupMQTT();
+  setupTemperature();
   vTaskDelete(NULL);
 }
 
