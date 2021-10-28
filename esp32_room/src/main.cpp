@@ -3,6 +3,7 @@
 #include "store.h"
 #include "mqtt.h"
 #include "wifiSetup.h"
+#include "io.h"
 
 void setup() {
   Serial.begin(115200);
@@ -11,6 +12,8 @@ void setup() {
   setupConfig();
   setupMQTT();
   setupTemperature();
+  setupIO();
+
   vTaskDelete(NULL);
 }
 
