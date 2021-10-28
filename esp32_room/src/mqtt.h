@@ -17,6 +17,7 @@ void setOnMqttReciveCallbacks(void (*func)(String key, String value))
 WiFiClient espClient;
 PubSubClient client(espClient);
 SemaphoreHandle_t mqtt_pub_sem;
+bool requirePublishOnline = false;
 void mqtt_publish(String subTopic, String data, bool retain = false)
 {
     String topic = String(mqtt_user) + "/" + subTopic;
@@ -39,9 +40,17 @@ void callback(char *topic, byte *payload, unsigned int length)
     String msg;
 
     String subTopic = String(topic).substring(String(mqtt_user).length() + 1);
+
     for (int i = 0; i < length; i++)
     {
         msg += (char)payload[i];
+    }
+    Serial.println(String("mqtt cb: ") + topic + " : " + msg);
+    if(subTopic == "esp32/isOnline"
+    && msg != "true"
+    ){
+        requirePublishOnline = true;
+        
     }
     for (auto mqttReciveCallback = mqttReciveCallbacks.begin();
          mqttReciveCallback != mqttReciveCallbacks.end();
@@ -82,12 +91,9 @@ void reconnect()
 }
 void mqttHandle(void *arg)
 {
-
-    client.setKeepAlive(60);
     mqtt_pub_sem = xSemaphoreCreateBinary();
     reconnect();
     xSemaphoreGive(mqtt_pub_sem);
-    mqtt_publish("esp32/isOnline", "true", true);
 
     while (1)
     {
@@ -96,6 +102,10 @@ void mqttHandle(void *arg)
             reconnect();
         }
         client.loop();
+        if(requirePublishOnline){
+            mqtt_publish("esp32/isOnline", "true", true);
+            requirePublishOnline = false;
+        }
         vTaskDelay(100/portTICK_PERIOD_MS);
     }
 }
