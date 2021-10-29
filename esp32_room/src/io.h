@@ -14,6 +14,8 @@ EasyButton button1(BUTTON_1);
 EasyButton button2(BUTTON_2);
 EasyButton button3(BUTTON_3);
 EasyButton button4(BUTTON_4);
+
+TimerHandle_t xOneMinuteTimer;
 void onPressed4()
 {
     Serial.println("Button pressed");
@@ -48,12 +50,18 @@ void ioHandle(void *pvParameters)
     while (1)
     {
         vTaskDelay(100 / portTICK_PERIOD_MS);
-        button1.read();
-        button2.read();
-        button3.read();
-        button4.read();
+        // button1.read();
+        // button2.read();
+        // button3.read();
+        // button4.read();
     }
 }
+void vTimerOneMinuteCallback( TimerHandle_t xTimer )
+ {
+     Serial.print(millis());
+    Serial.println("Button pressed");
+
+ }
 
 void setupIO()
 {
@@ -70,6 +78,15 @@ void setupIO()
     button2.begin();
     button3.begin();
     button4.begin();
+    xOneMinuteTimer = xTimerCreate(
+        "xOneMinuteTimer",
+        pdMS_TO_TICKS(60000),
+        pdTRUE,
+        0,
+        vTimerOneMinuteCallback
+        );
+//   vTaskStartScheduler();
+    xTimerStart(xOneMinuteTimer, 0);
 
     setOnMqttReciveCallbacks(
         [](String subTopic, String msg)
@@ -88,6 +105,32 @@ void setupIO()
             {
                 bool state = msg == "on" ? true : false;
                 digitalWrite(LIGHT_3, state);
+            }
+            else if (subTopic == "esp32/timer_on1")
+            {
+                setValue("timer_on1", msg, true);
+            }
+            else if (subTopic == "esp32/timer_off1")
+            {
+                setValue("timer_off1", msg, true);
+
+            }
+            else if (subTopic == "esp32/timer_on2")
+            {
+                setValue("timer_on2", msg, true);
+
+            }
+            else if (subTopic == "esp32/timer_off2")
+            {
+                setValue("timer_off2", msg, true);
+            }
+            else if (subTopic == "esp32/timer_on3")
+            {
+                setValue("timer_on3", msg, true);
+            }
+            else if (subTopic == "esp32/timer_off3")
+            {
+                setValue("timer_off3", msg, true);
             }
         });
     xTaskCreate(ioHandle, "ioHandle", 2048, NULL, 0, NULL);
