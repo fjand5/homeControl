@@ -1,10 +1,8 @@
 #include <Arduino.h>
+#include "env.h"
 #include "store.h"
 #include "mqtt.h"
 #include "buttons.h"
-#define LIGHT_1 23
-#define LIGHT_2 22
-#define LIGHT_3 21
 
 TimerHandle_t xOneMinuteTimer;
 void vTimerOneMinuteCallback(TimerHandle_t xTimer)

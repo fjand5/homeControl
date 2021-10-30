@@ -1,8 +1,7 @@
 #pragma once
+#include "wifiSetup.h"
 #include <Arduino.h>
 #include <WiFi.h>
-#define EAP_IDENTITY "Vong Cat-Hide" //if connecting from another corporation, use identity@organisation.domain in Eduroam
-#define EAP_PASSWORD "78787878"      //your Eduroam password
 void setupWifi()
 {
     WiFi.mode(WIFI_AP);

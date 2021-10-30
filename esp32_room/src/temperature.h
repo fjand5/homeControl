@@ -2,14 +2,21 @@
 #include <Arduino.h>
 #include "store.h"
 #include "mqtt.h"
-
-#define PIN_HEAT1 18
-#define PIN_HEAT2 19
-
-#define ON_HEAT true
-#define OFF_HEAT false
+#include "buttons.h"
 void loopTemperature(void *pvParameters)
 {
+  setOnButton4Click(
+      []()
+      {
+        if (getValue("ignoreTempCtrl", "false") == "true")
+        {
+          setValue("ignoreTempCtrl","false");
+        }
+        else{
+          setValue("ignoreTempCtrl","true");
+
+        }
+      });
   setOnMqttReciveCallbacks(
       [](String subTopic, String msg)
       {
@@ -33,6 +40,11 @@ void loopTemperature(void *pvParameters)
   setOnConfigChange(
       [](String key, String val)
       {
+        if(getValue("ignoreTempCtrl", "false") == "true"){
+            digitalWrite(PIN_HEAT1, OFF_HEAT);
+            digitalWrite(PIN_HEAT2, OFF_HEAT);
+            return;
+        }
         if (key == "temp1")
         {
           if (val.toInt() >= getValue("temp_upper1", "99").toInt())
@@ -55,7 +67,6 @@ void loopTemperature(void *pvParameters)
             digitalWrite(PIN_HEAT2, ON_HEAT);
           }
         }
-       
       });
   pinMode(PIN_HEAT1, OUTPUT);
   pinMode(PIN_HEAT2, OUTPUT);

@@ -1,10 +1,9 @@
+#pragma once
+#include "env.h"
 #include <Arduino.h>
 #include <EasyButton.h>
-
-#define BUTTON_1 34
-#define BUTTON_2 35
-#define BUTTON_3 32
-#define BUTTON_4 33
+#define CTX_TOGLE 1
+#define CTX_ADJ 2
 
 EasyButton button1(BUTTON_1);
 EasyButton button2(BUTTON_2);
@@ -14,7 +13,10 @@ EasyButton button4(BUTTON_4);
 void (*onButton1Click)(void);
 void (*onButton2Click)(void);
 void (*onButton3Click)(void);
+void (*onButton4Click)(void);
 
+
+int context_button = CTX_TOGLE;
 void setOnButton1Click(void (*func)(void)){
     onButton1Click=func;
 }
@@ -24,13 +26,22 @@ void setOnButton2Click(void (*func)(void)){
 void setOnButton3Click(void (*func)(void)){
     onButton3Click=func;
 }
+void setOnButton4Click(void (*func)(void)){
+    onButton4Click=func;
+}
 void onPressed4()
 {
-    Serial.println("Button pressed");
+    if(onButton4Click != NULL)
+        onButton4Click();
+}
+void changeContext(){
+    if(context_button == CTX_ADJ)
+        context_button = CTX_TOGLE;
+    if(context_button == CTX_TOGLE)
+        context_button = CTX_ADJ;
 }
 void onPressed1()
 {
-    Serial.println("onPressed1");
 
     if(onButton1Click != NULL)
         onButton1Click();
@@ -45,12 +56,14 @@ void onPressed3()
     if(onButton3Click != NULL)
         onButton3Click();
 }
+
 void buttonsHandle(void *pvParameters)
 {
     button1.onPressed(onPressed1);
     button2.onPressed(onPressed2);
     button3.onPressed(onPressed3);
     button4.onPressed(onPressed4);
+    button4.onPressedFor(2000, changeContext);
     while (1)
     {
         vTaskDelay(100 / portTICK_PERIOD_MS);

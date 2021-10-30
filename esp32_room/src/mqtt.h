@@ -1,11 +1,8 @@
 #pragma once
+#include "env.h"
 #include <PubSubClient.h>
 #include <WiFiClient.h>
 #include <list>
-#define mqtt_server "ngoinhaiot.com"
-#define mqtt_user "lastwillesp8266"
-#define mqtt_pwk "123123123"
-#define mqtt_port 1111
 
 typedef void (*mqttReciveCallback)(String, String);
 std::list<mqttReciveCallback> mqttReciveCallbacks;
@@ -20,7 +17,7 @@ SemaphoreHandle_t mqtt_pub_sem;
 bool requirePublishOnline = false;
 void mqtt_publish(String subTopic, String data, bool retain = false)
 {
-    String topic = String(mqtt_user) + "/" + subTopic;
+    String topic = String(MQTT_USER) + "/" + subTopic;
 
     if (mqtt_pub_sem != NULL)
     {
@@ -39,7 +36,7 @@ void callback(char *topic, byte *payload, unsigned int length)
 {
     String msg;
 
-    String subTopic = String(topic).substring(String(mqtt_user).length() + 1);
+    String subTopic = String(topic).substring(String(MQTT_USER).length() + 1);
 
     for (int i = 0; i < length; i++)
     {
@@ -73,10 +70,10 @@ void reconnect()
         String clientId = "ESP8266Client-";
         clientId += String(random(0xffff), HEX);
         // Attempt to connect
-        if (client.connect(clientId.c_str(), mqtt_user, mqtt_pwk,
-                           mqtt_user "/esp32/isOnline", 1, true, "false"))
+        if (client.connect(clientId.c_str(), MQTT_USER, MQTT_PWK,
+                           MQTT_USER "/esp32/isOnline", 1, true, "false"))
         {
-            client.subscribe(mqtt_user "/#");
+            client.subscribe(MQTT_USER "/#");
             Serial.println("MQTT connected");
         }
         else
@@ -111,7 +108,7 @@ void mqttHandle(void *arg)
 }
 void setupMQTT()
 {
-    client.setServer(mqtt_server, mqtt_port);
+    client.setServer(MQTT_SERVER, MQTT_PORT);
     client.setCallback(callback);
     xTaskCreate(mqttHandle, "mqttHandle", 20000, NULL, 0, NULL);
 }
