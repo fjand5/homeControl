@@ -23,12 +23,12 @@
 
 // output.h
 #define LIGHT_1 23
-#define LIGHT_2 22
-#define LIGHT_3 21
+#define LIGHT_2 19
+#define LIGHT_3 18
 
 // temprerature.h
-#define PIN_HEAT1 18
-#define PIN_HEAT2 19
+#define PIN_HEAT1 26
+#define PIN_HEAT2 27
 
 #define ON_HEAT true
 #define OFF_HEAT false

@@ -55,6 +55,8 @@ String getValue(String key, String def = "", bool setDefaultTokey = true)
         xSemaphoreGive(store_sem);
         setValue(key, def, true);
       }
+      xSemaphoreGive(store_sem);
+
       return def;
     }
   }
@@ -99,6 +101,7 @@ void setValue(String key, String value, bool save = true)
       xSemaphoreGive(store_sem);
       return;
     }
+    xSemaphoreGive(store_sem);
 
     File cfg_file = SPIFFS.open(CONFIG_FILE, "w");
     if (!cfg_file)
@@ -124,8 +127,6 @@ void setValue(String key, String value, bool save = true)
         (*onConfigChange)(key, value);
       }
     }
-
-    xSemaphoreGive(store_sem);
   }
 }
 
